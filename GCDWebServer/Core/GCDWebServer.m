@@ -186,6 +186,8 @@ static void _ExecuteMainThreadRunLoopSources() {
     _syncQueue = dispatch_queue_create([NSStringFromClass([self class]) UTF8String], DISPATCH_QUEUE_SERIAL);
     _sourceGroup = dispatch_group_create();
     _handlers = [[NSMutableArray alloc] init];
+    _allConnections = [[NSMutableArray alloc] init];
+
 #if TARGET_OS_IPHONE
     _backgroundTask = UIBackgroundTaskInvalid;
 #endif
@@ -242,7 +244,9 @@ static void _ExecuteMainThreadRunLoopSources() {
 }
 
 - (void)willStartConnection:(GCDWebServerConnection*)connection {
+
   dispatch_sync(_syncQueue, ^{
+    [self.allConnections  addObject:connection];
     GWS_DCHECK(self->_activeConnections >= 0);
     if (self->_activeConnections == 0) {
       dispatch_async(dispatch_get_main_queue(), ^{
@@ -295,6 +299,7 @@ static void _ExecuteMainThreadRunLoopSources() {
 
 - (void)didEndConnection:(GCDWebServerConnection*)connection {
   dispatch_sync(_syncQueue, ^{
+    [self.allConnections  removeObject:connection];
     GWS_DCHECK(self->_activeConnections > 0);
     self->_activeConnections -= 1;
     if (self->_activeConnections == 0) {
@@ -730,6 +735,12 @@ static inline NSString* _EncodeBase64(NSString* string) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [self->_delegate webServerDidStop:self];
     });
+  }
+}
+
+- (void)updateProgressWithConnection:(GCDWebServerConnection*)connection {
+  if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
+    [self.delegate webServerUpdateProgress:self connection:connection];
   }
 }
 

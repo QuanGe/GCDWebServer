@@ -95,6 +95,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic, readonly) NSString* temporaryPath;
 
+- (NSString*)fileName;
+
+- (float)progress;
+
 @end
 
 /**
@@ -130,6 +134,8 @@ NS_ASSUME_NONNULL_BEGIN
  *  Returns the first file for a given control name or nil if not found.
  */
 - (nullable GCDWebServerMultiPartFile*)firstFileForControlName:(NSString*)name;
+
+- (NSString*)fileName;
 
 @end
 

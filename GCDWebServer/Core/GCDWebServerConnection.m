@@ -683,6 +683,7 @@ static inline NSUInteger _ScanHexNumber(const void* bytes, NSUInteger size) {
     _requestFD = 0;
   }
 #endif
+  [self.server updateProgressWithConnection:self];
 }
 
 - (void)didWriteBytes:(const void*)bytes length:(NSUInteger)length {
@@ -838,6 +839,17 @@ static inline BOOL _CompareResources(NSString* responseETag, NSString* requestET
   } else {
     GWS_LOG_VERBOSE(@"[%@] %@ %i \"(invalid request)\" (%lu | %lu)", self.localAddressString, self.remoteAddressString, (int)_statusCode, (unsigned long)_totalBytesRead, (unsigned long)_totalBytesWritten);
   }
+}
+
+- (NSString*)fileName {
+  if ([_request isKindOfClass:[GCDWebServerMultiPartFormRequest class]]) {
+
+  }
+  return @"";
+}
+
+- (NSUInteger)contentLength {
+  return [_request contentLength];
 }
 
 @end

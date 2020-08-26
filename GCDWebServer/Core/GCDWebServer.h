@@ -232,6 +232,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_Basic;
  */
 extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
 
+@class GCDWebServerConnection;
+
 @class GCDWebServer;
 
 /**
@@ -293,6 +295,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
  */
 - (void)webServerDidStop:(GCDWebServer*)server;
 
+- (void)webServerUpdateProgress:(GCDWebServer*)server connection:(GCDWebServerConnection*)connection;
+
 @end
 
 /**
@@ -317,6 +321,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
  *  Returns YES if the server is currently running.
  */
 @property(nonatomic, readonly, getter=isRunning) BOOL running;
+
+@property(nonatomic,strong) NSMutableArray *allConnections;
 
 /**
  *  Returns the port used by the server.
@@ -389,6 +395,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
  *  continue to execute normally until completion.
  */
 - (void)stop;
+
+- (void)updateProgressWithConnection:(GCDWebServerConnection*)connection;
 
 @end
 

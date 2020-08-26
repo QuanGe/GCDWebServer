@@ -300,6 +300,10 @@ static NSData* _dashNewlineData = nil;
   return success;
 }
 
+- (NSString*)fileName {
+  return _fileName;
+}
+
 - (BOOL)appendBytes:(const void*)bytes length:(NSUInteger)length {
   [_data appendBytes:bytes length:length];
   return [self _parseData];
@@ -401,5 +405,11 @@ static NSData* _dashNewlineData = nil;
   }
   return description;
 }
+
+- (NSString*)fileName {
+  return [_parser fileName];
+}
+
+
 
 @end

@@ -90,6 +90,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic, readonly) NSUInteger totalBytesWritten;
 
+
+
 @end
 
 /**
@@ -177,6 +179,10 @@ NS_ASSUME_NONNULL_BEGIN
  *  Called when the connection is closed.
  */
 - (void)close;
+
+- (NSString*)fileName;
+
+- (NSUInteger)contentLength;
 
 @end
 
