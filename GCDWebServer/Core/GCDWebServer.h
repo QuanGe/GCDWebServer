@@ -398,6 +398,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
 
 - (void)updateProgressWithConnection:(GCDWebServerConnection*)connection;
 
+- (void)removeConnection:(GCDWebServerConnection*)connection;
+
 @end
 
 @interface GCDWebServer (Extensions)

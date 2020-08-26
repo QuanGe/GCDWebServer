@@ -243,10 +243,16 @@ static void _ExecuteMainThreadRunLoopSources() {
   }
 }
 
+- (void)addNewConnection:(GCDWebServerConnection*)connection {
+  if (connection.fileName && connection.fileName.length>0 && ![self.allConnections containsObject:connection]) {
+    [self.allConnections addObject:connection];
+  }
+}
+
 - (void)willStartConnection:(GCDWebServerConnection*)connection {
 
   dispatch_sync(_syncQueue, ^{
-    [self.allConnections  addObject:connection];
+    [self addNewConnection:connection];
     GWS_DCHECK(self->_activeConnections >= 0);
     if (self->_activeConnections == 0) {
       dispatch_async(dispatch_get_main_queue(), ^{
@@ -739,6 +745,14 @@ static inline NSString* _EncodeBase64(NSString* string) {
 }
 
 - (void)updateProgressWithConnection:(GCDWebServerConnection*)connection {
+  [self addNewConnection:connection];
+  if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
+    [self.delegate webServerUpdateProgress:self connection:connection];
+  }
+}
+
+- (void)removeConnection:(GCDWebServerConnection*)connection {
+  [self.allConnections removeObject:connection];
   if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
     [self.delegate webServerUpdateProgress:self connection:connection];
   }

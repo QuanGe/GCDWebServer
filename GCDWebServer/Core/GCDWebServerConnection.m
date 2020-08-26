@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_END
 
 - (NSString*)fileName {
   if ([_request isKindOfClass:[GCDWebServerMultiPartFormRequest class]]) {
-
+    return ((GCDWebServerMultiPartFormRequest*)_request).fileName;
   }
   return @"";
 }
@@ -810,6 +810,7 @@ static inline BOOL _CompareResources(NSString* responseETag, NSString* requestET
       // Nothing more to do
   }];
   GWS_LOG_DEBUG(@"Connection aborted with status code %i on socket %i", (int)statusCode, _socket);
+  [_server removeConnection:self];
 }
 
 - (void)close {
