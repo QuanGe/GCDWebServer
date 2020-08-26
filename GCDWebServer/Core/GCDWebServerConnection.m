@@ -120,6 +120,17 @@ NS_ASSUME_NONNULL_END
   }
 }
 
+- (NSString*)fileName {
+  if ([_request isKindOfClass:[GCDWebServerMultiPartFormRequest class]]) {
+
+  }
+  return @"";
+}
+
+- (NSUInteger)contentLength {
+  return [_request contentLength];
+}
+
 - (BOOL)isUsingIPv6 {
   const struct sockaddr* localSockAddr = _localAddressData.bytes;
   return (localSockAddr->sa_family == AF_INET6);
@@ -841,15 +852,6 @@ static inline BOOL _CompareResources(NSString* responseETag, NSString* requestET
   }
 }
 
-- (NSString*)fileName {
-  if ([_request isKindOfClass:[GCDWebServerMultiPartFormRequest class]]) {
 
-  }
-  return @"";
-}
-
-- (NSUInteger)contentLength {
-  return [_request contentLength];
-}
 
 @end

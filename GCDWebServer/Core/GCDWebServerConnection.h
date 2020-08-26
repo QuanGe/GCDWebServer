@@ -90,7 +90,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic, readonly) NSUInteger totalBytesWritten;
 
+- (NSString*)fileName;
 
+- (NSUInteger)contentLength;
 
 @end
 
@@ -180,9 +182,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)close;
 
-- (NSString*)fileName;
 
-- (NSUInteger)contentLength;
 
 @end
 
