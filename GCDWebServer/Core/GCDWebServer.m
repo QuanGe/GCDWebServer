@@ -306,6 +306,10 @@ static void _ExecuteMainThreadRunLoopSources() {
 - (void)didEndConnection:(GCDWebServerConnection*)connection {
   dispatch_sync(_syncQueue, ^{
     [self.allConnections  removeObject:connection];
+    if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
+      [self.delegate webServerUpdateProgress:self connection:connection];
+    }
+
     GWS_DCHECK(self->_activeConnections > 0);
     self->_activeConnections -= 1;
     if (self->_activeConnections == 0) {
