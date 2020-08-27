@@ -1,7 +1,7 @@
 /*
  Copyright (c) 2012-2019, Pierre-Olivier Latour
  All rights reserved.
- 
+
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  * The name of Pierre-Olivier Latour may not be used to endorse
  or promote products derived from this software without specific
  prior written permission.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -246,8 +246,6 @@ static void _ExecuteMainThreadRunLoopSources() {
 - (void)addNewConnection:(GCDWebServerConnection*)connection {
   if (connection.fileName && connection.fileName.length>0 && ![self.allConnections containsObject:connection]) {
     [self.allConnections addObject:connection];
-  }else if ([self.allConnections containsObject:connection]) {
-    [self.allConnections removeObject:connection];
   }
 }
 
@@ -605,7 +603,7 @@ static inline NSString* _EncodeBase64(NSString* string) {
       CFNetServiceSetClient(_registrationService, _NetServiceRegisterCallBack, &context);
       CFNetServiceScheduleWithRunLoop(_registrationService, CFRunLoopGetMain(), kCFRunLoopCommonModes);
       CFStreamError streamError = {0};
-      
+
       NSDictionary* txtDataDictionary = _GetOption(_options, GCDWebServerOption_BonjourTXTData, nil);
       if (txtDataDictionary != nil) {
         NSUInteger count = txtDataDictionary.count;
@@ -627,7 +625,7 @@ static inline NSString* _EncodeBase64(NSString* string) {
           }
         }
       }
-      
+
       CFNetServiceRegisterWithOptions(_registrationService, 0, &streamError);
 
       _resolutionService = CFNetServiceCreateCopy(kCFAllocatorDefault, _registrationService);
@@ -748,17 +746,24 @@ static inline NSString* _EncodeBase64(NSString* string) {
 }
 
 - (void)updateProgressWithConnection:(GCDWebServerConnection*)connection {
-  [self addNewConnection:connection];
-  if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
-    [self.delegate webServerUpdateProgress:self connection:connection];
-  }
+    [self addNewConnection:connection];
+    [self updateAllProgressWithConnection:connection];
 }
 
 - (void)removeConnection:(GCDWebServerConnection*)connection {
-  [self.allConnections removeObject:connection];
-  if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
-    [self.delegate webServerUpdateProgress:self connection:connection];
-  }
+    [self.allConnections removeObject:connection];
+    [self updateAllProgressWithConnection:connection];
+}
+
+- (void)updateAllProgressWithConnection:(GCDWebServerConnection*)connection{
+    for (GCDWebServerConnection* tmp in self.allConnections) {
+        if ([tmp fileName] == nil || ([tmp fileName] && [tmp fileName].length == 0)) {
+            [self.allConnections removeObject:tmp];
+        }
+    }
+    if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
+      [self.delegate webServerUpdateProgress:self connection:connection];
+    }
 }
 
 #if TARGET_OS_IPHONE
