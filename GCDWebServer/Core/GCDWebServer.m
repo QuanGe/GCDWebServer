@@ -246,6 +246,8 @@ static void _ExecuteMainThreadRunLoopSources() {
 - (void)addNewConnection:(GCDWebServerConnection*)connection {
   if (connection.fileName && connection.fileName.length>0 && ![self.allConnections containsObject:connection]) {
     [self.allConnections addObject:connection];
+  }else if ([self.allConnections containsObject:connection]) {
+    [self.allConnections removeObject:connection];
   }
 }
 
@@ -305,10 +307,7 @@ static void _ExecuteMainThreadRunLoopSources() {
 
 - (void)didEndConnection:(GCDWebServerConnection*)connection {
   dispatch_sync(_syncQueue, ^{
-    [self.allConnections  removeObject:connection];
-    if ([self.delegate respondsToSelector:@selector(webServerUpdateProgress:connection:)]) {
-      [self.delegate webServerUpdateProgress:self connection:connection];
-    }
+    [self removeConnection:connection];
 
     GWS_DCHECK(self->_activeConnections > 0);
     self->_activeConnections -= 1;
