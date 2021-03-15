@@ -29,6 +29,14 @@
 #error GCDWebUploader requires ARC
 #endif
 
+#define GWS_DCHECK(__CONDITION__) \
+  do {                            \
+    if (!(__CONDITION__)) {       \
+      abort();                    \
+    }                             \
+  } while (0)
+#define GWS_DNOT_REACHED() abort()
+
 #import <TargetConditionals.h>
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
@@ -78,7 +86,7 @@ NS_ASSUME_NONNULL_END
     GCDWebUploader* __unsafe_unretained server = self;
 
     // Resource files
-    [self addGETHandlerForBasePath:@"/" directoryPath:(NSString*)[siteBundle resourcePath] indexFilename:nil cacheAge:3600 allowRangeRequests:NO];
+    [self addZOEGETHandlerForBasePath:@"/" directoryPath:(NSString*)[siteBundle resourcePath] indexFilename:nil cacheAge:3600 allowRangeRequests:YES];
 
     // Web page
     [self addHandlerForMethod:@"GET"
@@ -190,6 +198,88 @@ NS_ASSUME_NONNULL_END
                  }];
   }
   return self;
+}
+
+- (void)addZOEGETHandlerForBasePath:(NSString*)basePath directoryPath:(NSString*)directoryPath indexFilename:(NSString*)indexFilename cacheAge:(NSUInteger)cacheAge allowRangeRequests:(BOOL)allowRangeRequests {
+  if ([basePath hasPrefix:@"/"] && [basePath hasSuffix:@"/"]) {
+    GCDWebUploader* __unsafe_unretained server = self;
+    [self
+        addHandlerWithMatchBlock:^GCDWebServerRequest*(NSString* requestMethod, NSURL* requestURL, NSDictionary<NSString*, NSString*>* requestHeaders, NSString* urlPath, NSDictionary<NSString*, NSString*>* urlQuery) {
+          if (![requestMethod isEqualToString:@"GET"]) {
+            return nil;
+          }
+          if (![urlPath hasPrefix:basePath]) {
+            return nil;
+          }
+          return [[GCDWebServerRequest alloc] initWithMethod:requestMethod url:requestURL headers:requestHeaders path:urlPath query:urlQuery];
+        }
+        processBlock:^GCDWebServerResponse*(GCDWebServerRequest* request) {
+          GCDWebServerResponse* response = nil;
+          NSString* filePath = [directoryPath stringByAppendingPathComponent:GCDWebServerNormalizePath([request.path substringFromIndex:basePath.length])];
+          NSString* fileType = [[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL] fileType];
+      if (!fileType) {
+        filePath = [self.uploadDirectory stringByAppendingPathComponent:GCDWebServerNormalizePath([request.path substringFromIndex:basePath.length])];
+        fileType = [[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL] fileType];
+      }
+          if (fileType) {
+            if ([fileType isEqualToString:NSFileTypeDirectory]) {
+              if (indexFilename) {
+                NSString* indexPath = [filePath stringByAppendingPathComponent:indexFilename];
+                NSString* indexType = [[[NSFileManager defaultManager] attributesOfItemAtPath:indexPath error:NULL] fileType];
+                if ([indexType isEqualToString:NSFileTypeRegular]) {
+                  return [GCDWebServerFileResponse responseWithFile:indexPath];
+                }
+              }
+              response = [server _responseWithContentsOfDirectory:filePath];
+            } else if ([fileType isEqualToString:NSFileTypeRegular]) {
+              if (allowRangeRequests) {
+                response = [GCDWebServerFileResponse responseWithFile:filePath byteRange:request.byteRange];
+                [response setValue:@"bytes" forAdditionalHeader:@"Accept-Ranges"];
+              } else {
+                response = [GCDWebServerFileResponse responseWithFile:filePath];
+              }
+            }
+          }
+          if (response) {
+            response.cacheControlMaxAge = cacheAge;
+          } else {
+            response = [GCDWebServerResponse responseWithStatusCode:kGCDWebServerHTTPStatusCode_NotFound];
+          }
+          return response;
+        }];
+  } else {
+    abort();
+  }
+}
+
+- (GCDWebServerResponse*)_responseWithContentsOfDirectory:(NSString*)path {
+  NSArray* contents = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:NULL] sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
+  if (contents == nil) {
+    return nil;
+  }
+  NSMutableString* html = [NSMutableString string];
+  [html appendString:@"<!DOCTYPE html>\n"];
+  [html appendString:@"<html><head><meta charset=\"utf-8\"></head><body>\n"];
+  [html appendString:@"<ul>\n"];
+  for (NSString* entry in contents) {
+    if (![entry hasPrefix:@"."]) {
+      NSString* type = [[[NSFileManager defaultManager] attributesOfItemAtPath:[path stringByAppendingPathComponent:entry] error:NULL] objectForKey:NSFileType];
+      GWS_DCHECK(type);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+      NSString* escapedFile = [entry stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+#pragma clang diagnostic pop
+      GWS_DCHECK(escapedFile);
+      if ([type isEqualToString:NSFileTypeRegular]) {
+        [html appendFormat:@"<li><a href=\"%@\">%@</a></li>\n", escapedFile, entry];
+      } else if ([type isEqualToString:NSFileTypeDirectory]) {
+        [html appendFormat:@"<li><a href=\"%@/\">%@/</a></li>\n", escapedFile, entry];
+      }
+    }
+  }
+  [html appendString:@"</ul>\n"];
+  [html appendString:@"</body></html>\n"];
+  return [GCDWebServerDataResponse responseWithHTML:html];
 }
 
 @end
